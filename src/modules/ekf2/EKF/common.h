@@ -166,11 +166,34 @@ struct auxVelSample {
 	Vector3f    velVar{};      ///< estimated error variance of the NE velocity (m/sec)**2
 };
 
-// Integer definitions for vdist_sensor_type
-#define VDIST_SENSOR_BARO  0    ///< Use baro height
-#define VDIST_SENSOR_GPS   1    ///< Use GPS height
-#define VDIST_SENSOR_RANGE 2    ///< Use range finder height
-#define VDIST_SENSOR_EV    3    ///< Use external vision
+struct stateSample {
+	Quatf    quat_nominal{};        ///< quaternion defining the rotation from body to earth frame
+	Vector3f vel{};                 ///< NED velocity in earth frame in m/s
+	Vector3f pos{};                 ///< NED position in earth frame in m
+	Vector3f delta_ang_bias{};      ///< delta angle bias estimate in rad
+	Vector3f delta_vel_bias{};      ///< delta velocity bias estimate in m/s
+	Vector3f mag_I{};               ///< NED earth magnetic field in gauss
+	Vector3f mag_B{};               ///< magnetometer bias estimate in body frame in gauss
+	Vector2f wind_vel{};            ///< horizontal wind velocity in earth frame in m/s
+};
+
+enum VDIST_SENSOR : uint8_t {
+	// Integer definitions for vdist_sensor_type
+	BARO  = 0,   	///< Use baro height
+	GPS   = 1,   	///< Use GPS height
+	RANGE = 2,   	///< Use range finder height
+	EV    = 3    	///< Use external vision
+};
+
+enum MAG_FUSE_TYPE : uint8_t {
+	// Integer definitions for mag_fusion_type
+	AUTO    = 0,   	///< The selection of either heading or 3D magnetometer fusion will be automatic
+	HEADING = 1,   	///< Simple yaw angle fusion will always be used. This is less accurate, but less affected by earth field distortions. It should not be used for pitch angles outside the range from -60 to +60 deg
+	MAG_3D  = 2,   	///< Magnetometer 3-axis fusion will always be used. This is more accurate, but more affected by localised earth field distortions
+	UNUSED  = 3,   	///< Not implemented
+	INDOOR  = 4,   	///< The same as option 0, but magnetometer or yaw fusion will not be used unless earth frame external aiding (GPS or External Vision) is being used. This prevents inconsistent magnetic fields associated with indoor operation degrading state estimates.
+	NONE    = 5    	///< Do not use magnetometer under any circumstance. Other sources of yaw may be used if selected via the EKF2_AID_MASK parameter.
+};
 
 // Bit locations for mag_declination_source
 #define MASK_USE_GEO_DECL     (1<<0)    ///< set to true to use the declination from the geo library when the GPS position becomes available, set to false to always use the EKF2_MAG_DECL value
@@ -193,14 +216,6 @@ enum TerrainFusionMask : int32_t {
 	TerrainFuseOpticalFlow = (1 << 1)
 };
 
-// Integer definitions for mag_fusion_type
-#define MAG_FUSE_TYPE_AUTO    0         ///< The selection of either heading or 3D magnetometer fusion will be automatic
-#define MAG_FUSE_TYPE_HEADING 1         ///< Simple yaw angle fusion will always be used. This is less accurate, but less affected by earth field distortions. It should not be used for pitch angles outside the range from -60 to +60 deg
-#define MAG_FUSE_TYPE_3D      2         ///< Magnetometer 3-axis fusion will always be used. This is more accurate, but more affected by localised earth field distortions
-#define MAG_FUSE_TYPE_UNUSED  3         ///< Not implemented
-#define MAG_FUSE_TYPE_INDOOR  4         ///< The same as option 0, but magnetometer or yaw fusion will not be used unless earth frame external aiding (GPS or External Vision) is being used. This prevents inconsistent magnetic fields associated with indoor operation degrading state estimates.
-#define MAG_FUSE_TYPE_NONE    5         ///< Do not use magnetometer under any circumstance. Other sources of yaw may be used if selected via the EKF2_AID_MASK parameter.
-
 // Maximum sensor intervals in usec
 #define GPS_MAX_INTERVAL  (uint64_t)5e5 ///< Maximum allowable time interval between GPS measurements (uSec)
 #define BARO_MAX_INTERVAL (uint64_t)2e5 ///< Maximum allowable time interval between pressure altitude measurements (uSec)
@@ -220,7 +235,7 @@ struct parameters {
 
 	// measurement source control
 	int32_t fusion_mode{MASK_USE_GPS};              ///< bitmasked integer that selects which aiding sources will be used
-	int32_t vdist_sensor_type{VDIST_SENSOR_BARO};   ///< selects the primary source for height data
+	int32_t vdist_sensor_type{VDIST_SENSOR::BARO};   ///< selects the primary source for height data
 	int32_t terrain_fusion_mode{TerrainFusionMask::TerrainFuseRangeFinder |
 				    TerrainFusionMask::TerrainFuseOpticalFlow}; ///< aiding source(s) selection bitmask for the terrain estimator
 
@@ -387,17 +402,6 @@ struct parameters {
 	const unsigned EKFGSF_reset_delay{1000000};     ///< Number of uSec of bad innovations on main filter in immediate post-takeoff phase before yaw is reset to EKF-GSF value
 	const float EKFGSF_yaw_err_max{0.262f};         ///< Composite yaw 1-sigma uncertainty threshold used to check for convergence (rad)
 	const unsigned EKFGSF_reset_count_limit{3};     ///< Maximum number of times the yaw can be reset to the EKF-GSF yaw estimator value
-};
-
-struct stateSample {
-	Quatf    quat_nominal{};        ///< quaternion defining the rotation from body to earth frame
-	Vector3f vel{};                 ///< NED velocity in earth frame in m/s
-	Vector3f pos{};                 ///< NED position in earth frame in m
-	Vector3f delta_ang_bias{};      ///< delta angle bias estimate in rad
-	Vector3f delta_vel_bias{};      ///< delta velocity bias estimate in m/s
-	Vector3f mag_I{};               ///< NED earth magnetic field in gauss
-	Vector3f mag_B{};               ///< magnetometer bias estimate in body frame in gauss
-	Vector2f wind_vel{};            ///< horizontal wind velocity in earth frame in m/s
 };
 
 union fault_status_u {
