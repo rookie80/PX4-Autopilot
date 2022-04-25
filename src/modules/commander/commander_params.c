@@ -1065,3 +1065,21 @@ PARAM_DEFINE_INT32(COM_ARM_SDCARD, 1);
  * @unit m/s
  */
 PARAM_DEFINE_FLOAT(COM_WIND_WARN, -1.f);
+
+/**
+ * Maximum allowed flight time
+ *
+ * The vehicle returns to launch when the vehicle is not landed and
+ * the time since takeoff is above this value.
+ *
+ * The default is 3540 seconds (59 minutes). Set a value of zero to disable.
+ *
+ *
+ * @unit s
+ * @min 0
+ * @max 10000
+ * @value 0 Disable
+ * @group Commander
+ * @unit s
+ */
+PARAM_DEFINE_INT32(COM_FLT_TIME_MAX, 3540);
