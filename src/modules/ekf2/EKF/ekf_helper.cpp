@@ -953,7 +953,7 @@ void Ekf::get_innovation_test_status(uint16_t &status, float &mag, float &vel, f
 // return a bitmask integer that describes which state estimates are valid
 void Ekf::get_ekf_soln_status(uint16_t *status) const
 {
-	ekf_solution_status soln_status;
+	ekf_solution_status_u soln_status;
 	// TODO: Is this accurate enough?
 	soln_status.flags.attitude = _control_status.flags.tilt_align && _control_status.flags.yaw_align && (_fault_status.value == 0);
 	soln_status.flags.velocity_horiz = (isHorizontalAidingActive() || (_control_status.flags.fuse_beta && _control_status.flags.fuse_aspd)) && (_fault_status.value == 0);

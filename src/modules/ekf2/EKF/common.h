@@ -505,7 +505,7 @@ union filter_control_status_u {
 };
 
 // Mavlink bitmask containing state of estimator solution
-union ekf_solution_status {
+union ekf_solution_status_u {
 	struct {
 		uint16_t attitude           : 1; ///< 0 - True if the attitude estimate is good
 		uint16_t velocity_horiz     : 1; ///< 1 - True if the horizontal velocity estimate is good
